@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Resources\PostResource;
 
 class PostController extends Controller
 {
@@ -14,14 +15,14 @@ class PostController extends Controller
      * 4-1. posts.index
      * Get paginated active posts
      */
-    public function index(): JsonResponse
-    {
-        $posts = Post::active()
-            ->with('user')
-            ->paginate(20);
+    public function index()
+{
+    $posts = Post::active()
+        ->with('user')
+        ->paginate(20);
 
-        return response()->json($posts);
-    }
+    return PostResource::collection($posts);
+}
 
     /**
      * 4-2. posts.create
@@ -49,16 +50,14 @@ class PostController extends Controller
     /**
      * 4-4. posts.show
      */
-    public function show(Post $post): JsonResponse
-    {
-        if ($post->is_draft || $post->published_at === null || $post->published_at->isFuture()) {
-            abort(404);
-        }
+    public function show(Post $post)
+{
+    $post = Post::active()
+        ->with('user')
+        ->findOrFail($post->id);
 
-        $post->load('user');
-
-        return response()->json($post);
-    }
+    return new PostResource($post);
+}
 
     /**
      * 4-5. posts.edit
